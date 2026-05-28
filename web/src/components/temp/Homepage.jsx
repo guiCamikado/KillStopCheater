@@ -1,5 +1,4 @@
 // Libs & React
-import { log } from "@techstark/opencv-js";
 import { useEffect, useState } from "react";
 // Atoms
 import ItemHolder from "../atoms/wrappers/ItemHolder";
@@ -15,13 +14,12 @@ export default function Homepage() {
   const [data, setData] = useState({});
   const [urlLink, setUrlLink] = useState("");
 
-  const date = new Date();
   const handleEventInput = (e) => {
     LocalStorage.handleEventInput(e, data, setData);
   };
 
   const sendActionTimeStamp = (key) => {
-    let timeNow = performance.now();
+    let timeNow = performance.now() * 1000;
     LocalStorage.insertFakeValue(key, timeNow, data, setData);
   };
 
@@ -29,21 +27,10 @@ export default function Homepage() {
     HttpClient.sendData(urlLink, data);
   };
 
-  useEffect(() => {
-    //WIP temporario
-    console.log(date.getTime()); // Obtem tempo em milisegundos desde que a página foi aberta, pior opção no caso.
-    console.log(performance.now() * 1000); // Obtem microsegundos desde que a página foi aberta, boa para melhor precisão!
-    console.log(data); // Dados armazenados nos inputs
-  }, [data]);
-
   function handleSubmit(e) {
-    e.preventDefault(); // impede o reload
-
+    e.preventDefault();
     console.log("Enviado");
   }
-
-  // No momento em que se tira a foto é necessário pegar um timeStamp
-  // No momento em que se envia também é necessário pegar outro timeStamp
 
   return (
     <ItemHolder
@@ -86,27 +73,6 @@ export default function Homepage() {
                 />
               </div>
 
-              {/* Measurement Unity */}
-              <div className="flex items-center font-medium text-zinc-300">
-                Unidade de medida
-              </div>
-
-              <div className="col-span-3">
-                <select
-                  className=" w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-blue-500"
-                  onChange={handleEventInput}
-                  name="measurementUnity"
-                >
-                  <option value={"microsecond"}>
-                    Microsegundos 0,000001, 1seg = 1.000.000us
-                  </option>
-                  <option value={"milisecond"}>
-                    Milliseconds 0,001, 1seg = 1,000ms{" "}
-                  </option>
-                  <option value={"second"}>Seconds 1</option>
-                </select>
-              </div>
-
               {/* timeMissCorrection */}
               <div className="flex items-center font-medium text-zinc-300">
                 Time Scored
@@ -140,8 +106,10 @@ export default function Homepage() {
 
               <button
                 onClick={() => {
-                  sendActionTimeStamp("sendTime");
-                  sendData(urlLink, data);
+                  const timeNow = performance.now() * 1000;
+                  const finalData = { ...data, sendTime: timeNow };
+                  LocalStorage.insertFakeValue("sendTime", timeNow, data, setData);
+                  sendData(urlLink, finalData);
                 }}
                 className="col-span-4 h-40 rounded-xl bg-blue-600 hover:bg-blue-500 transition text-xl font-bold shadow-lg"
               >
