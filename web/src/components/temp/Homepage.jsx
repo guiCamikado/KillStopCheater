@@ -1,13 +1,19 @@
-import ItemHolder from "../atoms/holders/ItemHolder";
-import CentralTitle from "../atoms/titles/CentralTitle";
-
-import LocalStorage from "../../utils/localStorageSaver";
-import CameraCapture from "../organisms/CameraCapture";
-import { useEffect, useState } from "react";
+// Libs & React
 import { log } from "@techstark/opencv-js";
+import { useEffect, useState } from "react";
+// Atoms
+import ItemHolder from "../atoms/wrappers/ItemHolder";
+import CentralTitle from "../atoms/titles/CentralTitle";
+import DefaultInput from "../atoms/inputs/DefaultInput";
+// Molecules
+import CameraCapture from "../organisms/CameraCapture";
+// JS Classes
+import LocalStorage from "../../utils/LocalStorageSaver";
+import HttpClient from "../../utils/httpClient";
 
 export default function Homepage() {
   const [data, setData] = useState({});
+  const [urlLink, setUrlLink] = useState("");
 
   const date = new Date();
   const handleEventInput = (e) => {
@@ -17,6 +23,10 @@ export default function Homepage() {
   const sendActionTimeStamp = (key) => {
     let timeNow = performance.now();
     LocalStorage.insertFakeValue(key, timeNow, data, setData);
+  };
+
+  const sendData = (urlLink, data) => {
+    HttpClient.sendData(urlLink, data);
   };
 
   useEffect(() => {
@@ -48,12 +58,11 @@ export default function Homepage() {
                 Tempo Alvo
               </div>
               <div className="col-span-3">
-                <input
-                  type="number"
-                  name="hitScore"
-                  placeholder="10000"
+                <DefaultInput
+                  type={"number"}
+                  name={"hitscore"}
+                  placeholder={"10000"}
                   onChange={handleEventInput}
-                  className=" w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
 
@@ -69,12 +78,11 @@ export default function Homepage() {
               </div>
 
               <div className="col-span-3">
-                <input
-                  type="number"
-                  name="pictureTimeFrame"
-                  placeholder="10000"
+                <DefaultInput
+                  type={"number"}
+                  name={"pictureTimeFrame"}
+                  placeholder={"10000"}
                   onChange={handleEventInput}
-                  className=" w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
 
@@ -105,12 +113,11 @@ export default function Homepage() {
               </div>
 
               <div className="col-span-3">
-                <input
-                  type="number"
-                  name="timeScored"
-                  placeholder="0"
+                <DefaultInput
+                  type={"number"}
+                  name={"timeScored"}
+                  placeholder={"0"}
                   onChange={handleEventInput}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -120,26 +127,26 @@ export default function Homepage() {
               </div>
 
               <div className="col-span-3">
-                <input
+                <DefaultInput
                   type="text"
                   name="postAddress"
                   placeholder="192.168.0.1/source?"
-                  onChange={handleEventInput}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-blue-500"
+                  onChange={(e) => {
+                    handleEventInput(e);
+                    setUrlLink("http://" + e.target.value);
+                  }}
                 />
               </div>
 
               <button
-                onClick={() => sendActionTimeStamp("sendTime")}
+                onClick={() => {
+                  sendActionTimeStamp("sendTime");
+                  sendData(urlLink, data);
+                }}
                 className="col-span-4 h-40 rounded-xl bg-blue-600 hover:bg-blue-500 transition text-xl font-bold shadow-lg"
               >
                 Enviar
               </button>
-
-              <div className="col-span-4 border-2 border-amber-200">
-                <h1 className="text-center col-span-4 text-2xl">LOG</h1>
-              </div>
-              <div className="col-span-4"></div>
             </div>
           </form>
         </>
