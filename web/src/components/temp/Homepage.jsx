@@ -107,8 +107,19 @@ export default function Homepage() {
               <button
                 onClick={() => {
                   const timeNow = performance.now() * 1000;
-                  const finalData = { ...data, sendTime: timeNow };
-                  LocalStorage.insertFakeValue("sendTime", timeNow, data, setData);
+
+                  const finalData = {
+                    ...data,
+                    sendTime: timeNow,
+                  };
+
+                  LocalStorage.insertFakeValue(
+                    "sendTime",
+                    timeNow,
+                    finalData,
+                    setData,
+                  );
+
                   sendData(urlLink, finalData);
                 }}
                 className="col-span-4 h-40 rounded-xl bg-blue-600 hover:bg-blue-500 transition text-xl font-bold shadow-lg"
