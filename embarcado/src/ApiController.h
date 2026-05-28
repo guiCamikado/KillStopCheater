@@ -6,8 +6,18 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
+#include "ServoMotor.h"
+
 class ApiController {
 private:
+  String _measurementUnit;         // Unidade de medida para calculo
+  unsigned long _hitscore;         // Tempo que se deverá acertar
+  unsigned long _pictureTimeFrame; // Tempo da foto digitada manualmente
+  unsigned long _pictureTime;      // Tempo em que foto foi tirada desde a abertura da página
+  unsigned long _sentTime;         // Tempo em que foto foi enviada desde a abertura da página
+  unsigned long _timeScored;       // Tempo em que foi acertado ("Se maior que hitscore deverá subtrair se menor somar a
+                                   // diferença para próxima tentativa")
+
   void loadDefaultHttpOptionsConfig() // Define configurações de rota
   {
     server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -30,22 +40,15 @@ private:
       return "{}";
     }
     String json = server.arg("plain");
-    Serial.print("Body: ");
-    Serial.println(json);
     return json;
   }
-
-  unsigned long _hitscore;         // Tempo que se deverá acertar
-  String _measurementUnit;         // Unidade de medida para calculo
-  unsigned long _pictureTimeFrame; // Tempo da foto digitada manualmente
-  unsigned long _pictureTime;      // Tempo em que foto foi tirada desde a abertura da página
-  unsigned long _sentTime;         // Tempo em que foto foi enviada desde a abertura da página
-  unsigned long _timeScored;       // Tempo em que foi acertado ("Se maior que hitscore deverá subtrair se menor somar a
-                                   // diferença para próxima tentativa")
 
 public:
   WebServer server;
   JsonHandler json;
+  ServoMotor servo;
+
+  unsigned long timeLeftToTrigger;
 
   void initiateRoutes() {
 
@@ -60,17 +63,42 @@ public:
       const String data = this->getArgs();
 
       JsonObject itemsArray = json.stringToObject(data);
+      //   Serial.println(data);
 
-      Serial.println(data);
+      _hitscore = itemsArray["hitscore"].as<unsigned long>();
+      _measurementUnit = itemsArray["measurementUnity"].as<String>();
+      _pictureTimeFrame = itemsArray["pictureTimeFrame"].as<unsigned long>();
+      _pictureTime = itemsArray["pictureTime"].as<unsigned long>();
+      _sentTime = itemsArray["sendTime"].as<unsigned long>();
+      _timeScored = itemsArray["timeScored"].as<unsigned long>();
 
-      this->_hitscore = itemsArray["hitscore"].as<unsigned long>();
-      this->_measurementUnit = itemsArray["measurementUnity"].as<String>();
-      this->_pictureTimeFrame = itemsArray["pictureTimeFrame"].as<unsigned long>();
-      this->_pictureTime = itemsArray["pictureTime"].as<unsigned long>();
-      this->_sentTime = itemsArray["sendTime"].as<unsigned long>();
-      this->_timeScored = itemsArray["timeScored"].as<unsigned long>();
+      timeLeftToTrigger =
+          servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored, _measurementUnit);
 
-      Serial.println("Executou até aqui!!");
+      Serial.println("========== DATA ==========");
+
+      Serial.print("_hitscore: ");
+      Serial.println(_hitscore);
+
+      Serial.print("_measurementUnit: ");
+      Serial.println(_measurementUnit);
+
+      Serial.print("_pictureTimeFrame: ");
+      Serial.println(_pictureTimeFrame);
+
+      Serial.print("_pictureTime: ");
+      Serial.println(_pictureTime);
+
+      Serial.print("_sentTime: ");
+      Serial.println(_sentTime);
+
+      Serial.print("_timeScored: ");
+      Serial.println(_timeScored);
+
+      Serial.print("timeLeftToTrigger: ");
+      Serial.println(timeLeftToTrigger);
+
+      Serial.println("==========================");
 
       server.send(200, "application/json", "{\"success\":true}");
     });
