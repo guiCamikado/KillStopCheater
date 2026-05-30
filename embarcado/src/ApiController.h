@@ -25,11 +25,11 @@ private:
     server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
     server.send(204);
   }
+
   String getArgs() // Recebe Post
   {
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
-    // Wip
     Serial.println("--- /control POST recebido ---");
     Serial.print("Num args: ");
     Serial.println(server.args());
@@ -46,9 +46,11 @@ private:
 public:
   WebServer server;
   JsonHandler json;
-  ServoMotor servo;
+  ServoMotor servo{25};
 
   unsigned long timeLeftToTrigger;
+
+  // ApiController() : servo(25) {}
 
   void initiateRoutes() {
 
@@ -58,12 +60,10 @@ public:
     });
 
     server.on("/control", HTTP_OPTIONS, [this]() { this->loadDefaultHttpOptionsConfig(); });
-
     server.on("/control", HTTP_POST, [this]() {
       const String data = this->getArgs();
 
       JsonObject itemsArray = json.stringToObject(data);
-      //   Serial.println(data);
 
       _hitscore = itemsArray["hitscore"].as<unsigned long>();
       _measurementUnit = itemsArray["measurementUnity"].as<String>();
@@ -75,37 +75,20 @@ public:
       timeLeftToTrigger =
           servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored, _measurementUnit);
 
-      Serial.println("========== DATA ==========");
-
-      Serial.print("_hitscore: ");
-      Serial.println(_hitscore);
-
-      Serial.print("_measurementUnit: ");
-      Serial.println(_measurementUnit);
-
-      Serial.print("_pictureTimeFrame: ");
-      Serial.println(_pictureTimeFrame);
-
-      Serial.print("_pictureTime: ");
-      Serial.println(_pictureTime);
-
-      Serial.print("_sentTime: ");
-      Serial.println(_sentTime);
-
-      Serial.print("_timeScored: ");
-      Serial.println(_timeScored);
-
-      Serial.print("timeLeftToTrigger: ");
-      Serial.println(timeLeftToTrigger);
-
-      Serial.println("==========================");
+      // servo.scheduleKillCheat(timeLeftToTrigger, 25, 180);
+      // servo.moveFoward(); //WIP
+      // delay(5000);
+      // servo.moveBackward();
 
       server.send(200, "application/json", "{\"success\":true}");
     });
 
     server.begin();
-
     Serial.println("Servidor HTTP iniciado");
   }
-  void handle() { server.handleClient(); }
+
+  void handle() {
+    server.handleClient();
+    servo.update();
+  }
 };

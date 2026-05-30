@@ -5,62 +5,86 @@
 // Classe referente ao uso do servoMotor
 class ServoMotor {
 private:
-  /* data */
   Servo servo;
+  unsigned long _timeToTrigger = 0;
+  int _defaultSpin = 180;
+  int _signalPin = 0;
+  bool waitingReturn = false;
+  unsigned long _timeToReturn = 0;
 
 public:
-  // Construtor
-
   bool waitingTrigger = false;
 
-  // WIP CORRIGIR!!! Essa função é crucial para o funcionamento da máquina!!
-  static unsigned long cheatLogic(long hitscore, long pictureTime, long sentTime, long pictureTimeFrame,
-                                  long timeScored, String measurementUnit) {
-    Servo servo;
-    // waitingTrigger = false;
-    float timePassed;
-    // Obtem valor do tempo que passou desde a ativação da função.
-    if (timeScored) {
-      timePassed = ((pictureTimeFrame * 1000) - (sentTime - pictureTime) + ((hitscore * 1000) - (timeScored * 1000)));
+  // Construtor padrão (necessário para instanciar sem argumentos)
+  ServoMotor() : _signalPin(0) {}
+
+  // Construtor com pino
+  ServoMotor(int signalPin) : _signalPin(signalPin) {}
+
+  void begin() {
+    servo.setPeriodHertz(50);
+    servo.attach(_signalPin, 500, 2400);
+  }
+
+  unsigned long cheatLogic(long hitscore, long pictureTime, long sentTime, long pictureTimeFrame, long timeScored,
+                           String measurementUnit) {
+    long timePassed;
+
+    if (timeScored && timeScored != 0) {
+      Serial.println("Entrou no IF");
+      timePassed = (((sentTime - pictureTime) + (pictureTimeFrame * 1000))) + (timeScored * 1000 - hitscore * 1000);
     } else {
-      timePassed = ((pictureTimeFrame * 1000) - (sentTime - pictureTime));
+      Serial.println("Entrou no Else");
+      timePassed = ((sentTime - pictureTime) + (pictureTimeFrame * 1000));
     }
 
-    // (WIP) Trata valores us -> ms -> s
-    // if (measurementUnit == "microsecond") { timePassed = timePassed; }
-    // if (measurementUnit == "milisecond") { timePassed = timePassed / 1000; }
-    // if (measurementUnit == "second") { timePassed = timePassed / 1000000; }
-
-    // Cria um gatilho para um countdown que ativará o Servomotor
-    // unsigned long = micros() + (timePassed * 1000);
-    // waitingTrigger = true;
-    unsigned long timeLeft = (hitscore * 1000) - timePassed;
+    unsigned long timeLeft = (hitscore * 1000) - timePassed + micros();
+    _timeToTrigger = timeLeft;
 
     Serial.println("===================DATA SERVO========================");
-    Serial.print("Tempo para acertar apartir da foto:");
-    Serial.println(((hitscore * 1000) - (timeScored * 1000)));
-    Serial.print("Tempo decorrido do envio da foto:");
+    Serial.print("Variavel timePassed: ");
+    Serial.println(timePassed);
+    Serial.print("Variavel pictureTimeFrame: ");
+    Serial.println(pictureTimeFrame);
+    Serial.print("Tempo decorrido dentre foto e envio: ");
     Serial.println((sentTime - pictureTime));
+    Serial.println("_______________________________________");
+    Serial.print("tempo para ativar (timeLeft): ");
+    Serial.println(timeLeft);
     Serial.println("=====================================================");
 
+    waitingTrigger = true;
     return timeLeft;
   }
 
-  // Ativa servomotor
-  void activateKillCheat(unsigned long timeToTrigger, int signalPin, int defaultSpin) {
-    int _defaultSpin;
-    servo.setPeriodHertz(50);
-    servo.attach(signalPin, 500, 2400); // WIP verificar isso
+  // Agenda o acionamento do servo — chamar scheduleKillCheat() + update() no loop()
+  void scheduleKillCheat(unsigned long timeToTrigger, int signalPin, int defaultSpin) {
+    _timeToTrigger = timeToTrigger;
+    _signalPin = signalPin;
+    _defaultSpin = defaultSpin;
+    waitingTrigger = true;
+  }
 
-    if (waitingTrigger) {
-      if ((long)(micros() - timeToTrigger) >= 0) {
-        waitingTrigger = false;
+  // Chamar no loop() — NÃO bloqueante
+  void update() {
+    if (!waitingTrigger) return;
 
-        servo.write(defaultSpin);
-        Serial.println("Servo ativado!!");
-      }
+    if ((long)(micros() - _timeToTrigger) >= 0) {
+      waitingTrigger = false;
+      Serial.println(_defaultSpin);
+      servo.write(_defaultSpin);
+      Serial.println("Spin ativado!!");
+      _timeToReturn = micros() + 5000000UL; // 5 segundos em micros
+      waitingReturn = true;
+    }
+
+    if (waitingReturn && (long)(micros() - _timeToReturn) >= 0) {
+      waitingReturn = false;
+      servo.write(0);
+      Serial.println("Spin desativado!!");
     }
   }
-  void moveFoward(int degree) { servo.write(degree); }
-  void moveBackward(int degree) { servo.write(degree * -1); }
+
+  void moveFoward() { servo.write(180); }
+  void moveBackward() { servo.write(0); }
 };

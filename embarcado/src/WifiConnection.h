@@ -60,7 +60,8 @@ public:
     WiFi.mode(WIFI_STA);
     Serial.print("Conectando em: ");
     Serial.println(ssid);
-    Serial.println(password);
+    Serial.print(", ");
+    Serial.print(password);
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {

@@ -1,7 +1,7 @@
 #pragma once
 #include <ArduinoJson.h>
 
-DynamicJsonDocument config(2048);
+JsonDocument config;
 
 class JsonHandler {
 public:
