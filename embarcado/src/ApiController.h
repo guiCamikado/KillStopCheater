@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <JsonHandler.h>
+#include <LittleFS.h>
 #include <WebServer.h>
 #include <WiFi.h>
 
@@ -30,9 +31,9 @@ private:
   {
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
-    Serial.println("--- /control POST recebido ---");
-    Serial.print("Num args: ");
-    Serial.println(server.args());
+    // Serial.println("--- /control POST recebido ---");
+    // Serial.print("Num args: ");
+    // Serial.println(server.args());
 
     if (!server.hasArg("plain")) {
       Serial.println("Erro: sem body");
@@ -53,11 +54,12 @@ public:
   // ApiController() : servo(25) {}
 
   void initiateRoutes() {
-
-    server.on("/", HTTP_GET, [this]() {
-      server.sendHeader("Access-Control-Allow-Origin", "*");
-      server.send(200, "text/plain", "API ONLINE");
-    });
+    LittleFS.begin(true);
+    server.serveStatic("/", LittleFS, "/");
+    // server.on("/", HTTP_GET, [this]() {
+    //   server.sendHeader("Access-Control-Allow-Origin", "*");
+    //   server.send(200, "text/plain", "API ONLINE");
+    // });
 
     server.on("/control", HTTP_OPTIONS, [this]() { this->loadDefaultHttpOptionsConfig(); });
     server.on("/control", HTTP_POST, [this]() {
@@ -72,8 +74,7 @@ public:
       _sentTime = itemsArray["sendTime"].as<unsigned long>();
       _timeScored = itemsArray["timeScored"].as<unsigned long>();
 
-      timeLeftToTrigger =
-          servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored, _measurementUnit);
+      timeLeftToTrigger = servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored);
 
       // servo.scheduleKillCheat(timeLeftToTrigger, 25, 180);
       // servo.moveFoward(); //WIP
@@ -83,8 +84,19 @@ public:
       server.send(200, "application/json", "{\"success\":true}");
     });
 
+    server.onNotFound([this]() {
+      File file = LittleFS.open("/index.html", "r");
+
+      if (!file) {
+        server.send(404, "text/plain", "index.html not found");
+        return;
+      }
+
+      server.streamFile(file, "text/html");
+      file.close();
+    });
     server.begin();
-    Serial.println("Servidor HTTP iniciado");
+    // Serial.println("Servidor HTTP iniciado");
   }
 
   void handle() {

@@ -4,6 +4,7 @@
 #include <JsonHandler.h>
 #include <WebServer.h>
 #include <WiFi.h>
+#include <espSignal.h>
 
 #include <ApiController.h>
 
@@ -40,41 +41,45 @@ public:
   WebServer server;
   JsonHandler json;
   ApiController api;
+  EspSignal led;
 
   WifiConnection() : server(80) {}
 
   void startWifi(const char *ssid, const char *password) {
     IPAddress ip(192, 168, 1, 1);
-    IPAddress gateway(192, 168, 0, 1);
+    IPAddress gateway(192, 168, 1, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(ip, gateway, subnet);
     WiFi.softAP(ssid, password);
 
-    Serial.print("AP IP: ");
-    Serial.println(WiFi.softAPIP());
+    // Serial.print("AP IP: ");
+    // Serial.println(WiFi.softAPIP());
   }
 
-  void connectWifi(const char *ssid, const char *password) {
+  void connectToWifi(const char *ssid, const char *password) {
     WiFi.mode(WIFI_STA);
-    Serial.print("Conectando em: ");
-    Serial.println(ssid);
-    Serial.print(", ");
-    Serial.print(password);
+    // Serial.print("Conectando em: ");
+    // Serial.println(ssid);
+    // Serial.print(", ");
+    // Serial.print(password);
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
-    Serial.println();
-    Serial.println("WiFi conectado!");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
+    // Serial.println();
+    // Serial.println("WiFi conectado!");
+    // Serial.print("IP: ");
+    // Serial.println(WiFi.localIP());
 
     api.initiateRoutes();
   }
 
-  void handle() { api.handle(); }
+  void handle() {
+    api.handle();
+    led.handle(); // Pelo WIFI travar a aplicação até conectar isso deverá ser alterado caso a lógica mude!
+  }
 };
