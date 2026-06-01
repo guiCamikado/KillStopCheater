@@ -54,8 +54,8 @@ public:
     WiFi.softAPConfig(ip, gateway, subnet);
     WiFi.softAP(ssid, password);
 
-    // Serial.print("AP IP: ");
-    // Serial.println(WiFi.softAPIP());
+    Serial.print("AP IP: ");
+    Serial.println(WiFi.softAPIP());
   }
 
   void connectToWifi(const char *ssid, const char *password) {
@@ -72,8 +72,8 @@ public:
     }
     // Serial.println();
     // Serial.println("WiFi conectado!");
-    // Serial.print("IP: ");
-    // Serial.println(WiFi.localIP());
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
 
     api.initiateRoutes();
   }

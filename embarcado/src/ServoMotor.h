@@ -9,12 +9,11 @@ private:
   unsigned long _timeToTrigger = 0;
   int _defaultSpin = 180;
   int _signalPin = 0;
-  bool waitingReturn = false;
+  bool _waitingReturn = false;
+  bool _waitingTrigger = false;
   unsigned long _timeToReturn = 0;
 
 public:
-  bool waitingTrigger = false;
-
   // Construtor padrão (necessário para instanciar sem argumentos)
   ServoMotor() : _signalPin(0) {}
 
@@ -26,7 +25,7 @@ public:
     servo.attach(_signalPin, 500, 2400);
   }
 
-  unsigned long cheatLogic(long hitscore, long pictureTime, long sentTime, long pictureTimeFrame, long timeScored) {
+  void cheatLogic(long hitscore, long pictureTime, long sentTime, long pictureTimeFrame, long timeScored) {
     long timePassed;
 
     if (timeScored && timeScored != 0) {
@@ -37,6 +36,7 @@ public:
 
     unsigned long timeLeft = (hitscore * 1000) - timePassed + micros();
     _timeToTrigger = timeLeft;
+    _waitingTrigger = true;
 
     // Serial.println("===================DATA SERVO========================");
     // Serial.print("Variavel timePassed: ");
@@ -50,31 +50,22 @@ public:
     // Serial.println(timeLeft);
     // Serial.println("=====================================================");
 
-    waitingTrigger = true;
-    return timeLeft;
-  }
-
-  // Agenda o acionamento do servo — chamar scheduleKillCheat() + update() no loop()
-  void scheduleKillCheat(unsigned long timeToTrigger, int signalPin, int defaultSpin) {
-    _timeToTrigger = timeToTrigger;
-    _signalPin = signalPin;
-    _defaultSpin = defaultSpin;
-    waitingTrigger = true;
+    // _waitingReturn = true;
   }
 
   // Chamar no loop() — NÃO bloqueante
   void update() {
-    if (!waitingTrigger) return;
 
-    if ((long)(micros() - _timeToTrigger) >= 0) {
-      waitingTrigger = false;
+    if (_waitingTrigger && ((long)(micros() - _timeToTrigger) >= 0)) {
       servo.write(_defaultSpin);
-      _timeToReturn = micros() + 5000000UL; // 5seg.
-      waitingReturn = true;
+      _timeToReturn = micros() + 5000000UL;
+      _waitingReturn = true;
+      _waitingTrigger = false;
     }
 
-    if (waitingReturn && (long)(micros() - _timeToReturn) >= 0) {
-      waitingReturn = false;
+    if (_waitingReturn && (long)(micros() - _timeToReturn) >= 0) {
+      _waitingReturn = false;
+
       servo.write(0);
     }
   }

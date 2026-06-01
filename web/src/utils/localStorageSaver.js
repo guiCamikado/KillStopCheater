@@ -8,8 +8,9 @@ class LocalStorage {
   }
 
   static handleEventInput(e, currentData, setValue) {
-    const { name, value } = e.target;
-    const newData = { ...currentData, [name]: value };
+    const { name, value, type } = e.target;
+    const parsed = type === "number" ? Number(value) : value;
+    const newData = { ...currentData, [name]: parsed };
     setValue(newData);
     return newData;
   }

@@ -49,8 +49,6 @@ public:
   JsonHandler json;
   ServoMotor servo{25};
 
-  unsigned long timeLeftToTrigger;
-
   // ApiController() : servo(25) {}
 
   void initiateRoutes() {
@@ -67,14 +65,15 @@ public:
 
       JsonObject itemsArray = json.stringToObject(data);
 
-      _hitscore = itemsArray["hitscore"].as<unsigned long>();
+      _hitscore = itemsArray["hitscore"].as<long>();
       _measurementUnit = itemsArray["measurementUnity"].as<String>();
-      _pictureTimeFrame = itemsArray["pictureTimeFrame"].as<unsigned long>();
+      _pictureTimeFrame = itemsArray["pictureTimeFrame"].as<long>();
       _pictureTime = itemsArray["pictureTime"].as<unsigned long>();
       _sentTime = itemsArray["sendTime"].as<unsigned long>();
       _timeScored = itemsArray["timeScored"].as<unsigned long>();
 
-      timeLeftToTrigger = servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored);
+      // Função que seta a inicialização do relógio
+      servo.cheatLogic(_hitscore, _pictureTime, _sentTime, _pictureTimeFrame, _timeScored);
 
       // servo.scheduleKillCheat(timeLeftToTrigger, 25, 180);
       // servo.moveFoward(); //WIP
